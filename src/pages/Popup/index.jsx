@@ -45,6 +45,7 @@ const getHostUrl = (url) => {
     url: hostUrl,
     name: '_session_id',
   });
+  console.log("-> sessionId", sessionId);
 
   await chrome.cookies.set({
     url: 'http://localhost:3000',
