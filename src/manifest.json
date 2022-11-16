@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension with React & Webpack",
-  "description": "A chrome extension boilerplate built with React 17, Webpack 5, and Webpack Dev Server 4",
+  "name": "IgnitionApp Toolbelt",
+  "description": "Toolbelt",
   "options_page": "options.html",
   "background": { "service_worker": "background.bundle.js" },
   "action": {
@@ -16,10 +16,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["http://*/*", "https://*/*", "<all_urls>"],
+      "matches": ["https://*.ignitionapp.com/*"],
       "js": ["contentScript.bundle.js"],
       "css": ["content.styles.css"]
     }
+  ],
+  "permissions": ["storage", "tabs", "cookies"],
+  "host_permissions": [
+    "https://*.ignitionapp.com/",
+    "http://localhost:3000/"
   ],
   "devtools_page": "devtools.html",
   "web_accessible_resources": [
