@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Button,
   Heading,
@@ -202,6 +202,15 @@ const getRandomScore = () => {
   return Math.ceil(Math.random() * 10 * 100) / 100;
 };
 
+const getActiveTab = async () => {
+  const [activeTab] = await chrome.tabs.query({
+    currentWindow: true,
+    active: true,
+  });
+
+  return activeTab;
+};
+
 const authClient = new ApolloClient({
   uri: 'http://localhost:3000/auth-api/graphql',
   cache: new InMemoryCache(),
@@ -235,13 +244,37 @@ const signIn = async ({ email }) => {
   return data.userLogin;
 };
 
+const cmiScore = getRandomScore();
+const healthScore = getRandomScore();
+
 const Popup = () => {
   const [isProcessing, setProcessing] = useBoolean(false);
+  const [isComicSansEnabled, setComicSansEnabled] = useBoolean(false);
+  const [isNpeExitEnabled, setNpeExitEnabled] = useBoolean(false);
   const { loading, data } = useQuery(QUERY);
   const [removeAcknowledgement, { loading: isProcessingRemoveAck }] =
     useMutation(MUTATION_REMOVE_ACK);
   const [addAcknowledgement, { loading: isProcessingAddAck }] =
     useMutation(MUTATION_ADD_ACK);
+
+  useEffect(() => {
+    chrome.storage.sync.get(['COMIC_SANS'], (value) => {
+      const isEnabled = value['COMIC_SANS'];
+      if (isEnabled) {
+        setComicSansEnabled.on();
+      } else {
+        setComicSansEnabled.off();
+      }
+    });
+    chrome.storage.sync.get(['NPE_EXIT'], (value) => {
+      const isEnabled = value['NPE_EXIT'];
+      if (isEnabled) {
+        setNpeExitEnabled.on();
+      } else {
+        setNpeExitEnabled.off();
+      }
+    });
+  }, [setComicSansEnabled, setNpeExitEnabled]);
 
   const { currentPractice, acknowledgements } = data || {};
   const { renewDate } = currentPractice?.billing?.currentSubscription || {};
@@ -323,8 +356,27 @@ const Popup = () => {
     setProcessing.off();
   };
 
-  const cmiScore = getRandomScore();
-  const healthScore = getRandomScore();
+  const handleToggleComicSans = async (e) => {
+    const activeTab = await getActiveTab();
+
+    await chrome.storage.sync.set({ COMIC_SANS: e.target.checked });
+
+    await chrome.tabs.sendMessage(activeTab.id, {
+      type: 'COMIC_SANS',
+      value: e.target.checked,
+    });
+  };
+
+  const handleToggleNpeExit = async (e) => {
+    const activeTab = await getActiveTab();
+
+    await chrome.storage.sync.set({ NPE_EXIT: e.target.checked });
+
+    await chrome.tabs.sendMessage(activeTab.id, {
+      type: 'NPE_EXIT',
+      value: e.target.checked,
+    });
+  };
 
   if (loading) {
     return (
@@ -336,24 +388,24 @@ const Popup = () => {
 
   return (
     <ChakraProvider>
-      <Stack className="App" spacing="24px">
+      <Stack className="App" spacing="16px" pb="20px">
         <Stack as="header">
           <Center>
             <img src={logo} className="App-logo" alt="logo" />
           </Center>
-          <Heading as="h1" size="lg" isTruncated>
+          <Heading as="h1" size="lg">
             {currentPractice.name}
           </Heading>
           {renewDate && (
-            <div style={{ fontSize: '16px', color: 'pink' }}>
+            <Text color="pink" fontSize="14px">
               Renew Date: {renewDate}
-            </div>
+            </Text>
           )}
         </Stack>
 
         <HStack as="section" px="50px">
           <section style={{ width: '50%' }}>
-            <Heading as="h2" size="sm" isTruncated>
+            <Heading as="h2" size="sm">
               CMI Score
             </Heading>
             <Text
@@ -392,7 +444,9 @@ const Popup = () => {
                   {...{ id }}
                 />
                 <FormLabel fontSize="12px" htmlFor={id}>
-                  {id}
+                  <Text width="180px" isTruncated>
+                    {id}
+                  </Text>
                 </FormLabel>
                 <Badge
                   colorScheme="yellow"
@@ -455,14 +509,28 @@ const Popup = () => {
           </Stack>
         </Stack>
 
-        <Stack as="section" px="50px">
+        <Stack as="section" px="50px" pb="20px">
           <Heading as="h2" size="sm" isTruncated>
             Refined Ignition
           </Heading>
           <HStack justifyContent="center">
-            <Switch defaultChecked={false} id="enable-comic-sans" />
-            <FormLabel fontSize="12px" htmlFor="enable-comic-sans">
-              Using Comic Sans
+            <Switch
+              defaultChecked={isComicSansEnabled}
+              id="enable-comic-sans"
+              onChange={handleToggleComicSans}
+            />
+            <FormLabel fontSize="12px" htmlFor="enable-comic-sans"  width="150px">
+              Enable Comic Sans
+            </FormLabel>
+          </HStack>
+          <HStack justifyContent="center">
+            <Switch
+              defaultChecked={isNpeExitEnabled}
+              id="enable-npe-exit"
+              onChange={handleToggleNpeExit}
+            />
+            <FormLabel fontSize="12px" htmlFor="enable-npe-exit" width="150px">
+              Better NPE Exit
             </FormLabel>
           </HStack>
         </Stack>

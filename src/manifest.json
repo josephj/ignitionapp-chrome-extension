@@ -16,7 +16,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://*.ignitionapp.com/*"],
+      "matches": ["https://*.ignitionapp.com/*", "http://localhost:3000/*"],
       "js": ["contentScript.bundle.js"],
       "css": ["content.styles.css"]
     }
