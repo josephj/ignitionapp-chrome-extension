@@ -1,3 +1,7 @@
+html, body {
+  color: #fff !important;
+  background-color: #282c34 !important;
+}
 body {
   width: 400px;
   height: 600px;
@@ -7,7 +11,6 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #282c34;
 
   position: relative;
 }

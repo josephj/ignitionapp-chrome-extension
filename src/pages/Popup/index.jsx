@@ -1,6 +1,9 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { ApolloProvider, ApolloClient, InMemoryCache } from '@apollo/client';
+import { Button, ChakraProvider, Flex, Stack, Text } from '@chakra-ui/react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGem } from '@fortawesome/free-solid-svg-icons';
 
 import Popup from './Popup';
 import './index.css';
@@ -22,8 +25,6 @@ const getHostUrl = (url) => {
   return null;
 };
 
-
-
 (async () => {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
   const tabUrl = tabs[0].url;
@@ -39,26 +40,41 @@ const getHostUrl = (url) => {
         chrome.tabs.update({ url: 'https://demo.ignitionapp.com' });
         break;
       case 'dev':
-        chrome.tabs.update({ url: 'https://localhost:3000' });
+        chrome.tabs.update({ url: 'http://localhost:3000' });
         break;
     }
+    // window.location.reload();
+    // chrome.runtime.reload()
   };
 
   if (!hostUrl) {
     render(
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>You can only use this extension when browsing IgnitionApp</p>
-        <center>
-          <button onClick={handleRedirect('production')}>
-            Go to Production
-          </button>
-          <button onClick={handleRedirect('demo')}>Go to Demo</button>
-          <button onClick={handleRedirect('dev')}>Go to Dev</button>
-        </center>
-        </header>
-      </div>,
+      <ChakraProvider>
+        <Flex
+          alignItems="center"
+          position="absolute"
+          flexDirection="center"
+          height="100%"
+          justifyContent="center"
+          width="100%"
+        >
+          <Stack spacing="24px" p="50px">
+            <img src={logo} className="App-logo" alt="logo" />
+            <Stack>
+              <Button
+                colorScheme="purple"
+                onClick={handleRedirect('dev')}
+                size="lg"
+              >
+                <FontAwesomeIcon icon={faGem} />{' '}
+                <Text fontSize="16px" ml="5px">
+                  Launch Ignition App
+                </Text>
+              </Button>
+            </Stack>
+          </Stack>
+        </Flex>
+      </ChakraProvider>,
       rootEl
     );
     return;

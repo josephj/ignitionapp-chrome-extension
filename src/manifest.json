@@ -21,7 +21,7 @@
       "css": ["content.styles.css"]
     }
   ],
-  "permissions": ["storage", "tabs", "cookies"],
+  "permissions": ["storage", "tabs", "cookies", "management"],
   "host_permissions": [
     "https://*.ignitionapp.com/",
     "http://localhost:3000/"

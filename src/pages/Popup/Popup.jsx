@@ -1,5 +1,19 @@
 import React from 'react';
 import {
+  Button,
+  Heading,
+  ChakraProvider,
+  HStack,
+  Stack,
+  Center,
+  useBoolean,
+  Switch,
+  Badge,
+  Text,
+  FormLabel,
+  Flex,
+} from '@chakra-ui/react';
+import {
   useQuery,
   useMutation,
   gql,
@@ -39,8 +53,8 @@ const MUTATION_CREATE_STANDARD_ACCOUNT = gql`
 `;
 
 const MUTATION_CREATE_ACCOUNT_WITH_PAYMENTS = gql`
-  mutation seedPracticeWithPayments($practiceId: ID!) {
-    seedPracticeWithPayments(input: { practiceId: $practiceId }) {
+  mutation seedPracticeWithPayments {
+    seedPracticeWithPayments(input: {}) {
       practice {
         id
         name
@@ -222,6 +236,7 @@ const signIn = async ({ email }) => {
 };
 
 const Popup = () => {
+  const [isProcessing, setProcessing] = useBoolean(false);
   const { loading, data } = useQuery(QUERY);
   const [removeAcknowledgement, { loading: isProcessingRemoveAck }] =
     useMutation(MUTATION_REMOVE_ACK);
@@ -240,6 +255,7 @@ const Popup = () => {
   };
 
   const handleCreateAccountStandard = async () => {
+    setProcessing.on();
     const { practiceId, email } = await createBasePractice({
       name: 'Hello Hacker',
     });
@@ -247,24 +263,24 @@ const Popup = () => {
       mutation: MUTATION_CREATE_STANDARD_ACCOUNT,
       variables: { practiceId },
     });
-    const authData = await signIn({ email });
+    await signIn({ email });
     chrome.tabs.update({ url: 'http://localhost:3000/dashboard' });
-    // console.log("-> authData", authData);
+    setProcessing.off();
   };
 
   const handleCreateAccountPayment = async () => {
-    const { practiceId, email } = await createBasePractice({
-      name: 'Payment Hacker',
-    });
-    await devClient.mutate({
+    setProcessing.on();
+    const { data } = await devClient.mutate({
       mutation: MUTATION_CREATE_ACCOUNT_WITH_PAYMENTS,
-      variables: { practiceId },
     });
+    const { email } = data.seedPracticeWithPayments.practice.principal;
     await signIn({ email });
     chrome.tabs.update({ url: 'http://localhost:3000/settings/payments' });
+    setProcessing.off();
   };
 
   const handleCreateAccountQuickBooks = async () => {
+    setProcessing.on();
     const { practiceId, email } = await createBasePractice({
       name: 'Quickbook Hacker',
     });
@@ -274,9 +290,11 @@ const Popup = () => {
     });
     await signIn({ email });
     chrome.tabs.update({ url: 'http://localhost:3000/apps' });
+    setProcessing.off();
   };
 
   const handleCreateAccountXero = async () => {
+    setProcessing.on();
     const { practiceId, email } = await createBasePractice({
       name: 'Xero Hacker',
     });
@@ -286,9 +304,11 @@ const Popup = () => {
     });
     await signIn({ email });
     chrome.tabs.update({ url: 'http://localhost:3000/apps' });
+    setProcessing.off();
   };
 
   const handleCreateAccountDraftProposal = async () => {
+    setProcessing.on();
     const { practiceId, email } = await createBasePractice({
       name: 'Proposal Hacker',
     });
@@ -300,109 +320,154 @@ const Popup = () => {
     chrome.tabs.update({
       url: 'http://localhost:3000/pipeline?page=1&status=DRAFT',
     });
+    setProcessing.off();
   };
+
+  const cmiScore = getRandomScore();
+  const healthScore = getRandomScore();
 
   if (loading) {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo App-logo-spin" alt="logo" />
-        </header>
-      </div>
+      <Flex alignItems="center" justifyContent="center" className="App">
+        <img src={logo} className="App-logo App-logo-spin" alt="logo" />
+      </Flex>
     );
   }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>{currentPractice.name}</p>
-        {renewDate && (
-          <div style={{ fontSize: '16px', color: 'pink' }}>
-            Renew Date: {renewDate}
-          </div>
-        )}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-evenly',
-            width: '90%',
-            margin: '0 auto',
-          }}
-        >
+    <ChakraProvider>
+      <Stack className="App" spacing="24px">
+        <Stack as="header">
+          <Center>
+            <img src={logo} className="App-logo" alt="logo" />
+          </Center>
+          <Heading as="h1" size="lg" isTruncated>
+            {currentPractice.name}
+          </Heading>
+          {renewDate && (
+            <div style={{ fontSize: '16px', color: 'pink' }}>
+              Renew Date: {renewDate}
+            </div>
+          )}
+        </Stack>
+
+        <HStack as="section" px="50px">
           <section style={{ width: '50%' }}>
-            <h3>CMI Score</h3>
-            <div>{getRandomScore()}</div>
+            <Heading as="h2" size="sm" isTruncated>
+              CMI Score
+            </Heading>
+            <Text
+              color={cmiScore > 5 ? 'green' : 'red'}
+              fontWeight="bold"
+              fontSize="36px"
+            >
+              {cmiScore}
+            </Text>
           </section>
           <section style={{ width: '50%' }}>
-            <h3>Health Score</h3>
-            <div>{getRandomScore()}</div>
+            <Heading as="h2" size="sm" isTruncated>
+              Health Score
+            </Heading>
+            <Text
+              color={healthScore > 5 ? 'green' : 'red'}
+              fontWeight="bold"
+              fontSize="36px"
+            >
+              {healthScore}
+            </Text>
           </section>
-        </div>
+        </HStack>
 
-        <hr />
-
-        <section>
-          <h3>Acknowledgement</h3>
-          <ul>
+        <Stack as="section" px="50px">
+          <Heading as="h2" size="sm" isTruncated>
+            Acknowledgement
+          </Heading>
+          <Stack>
             {acknowledgements.map(({ id, level }) => (
-              <li
-                key={id}
-                style={{
-                  display: 'flex',
-                  verticalAlign: 'middle',
-                  textAlign: 'left',
-                  fontSize: '10px',
-                }}
-              >
-                <label>
-                  <input
-                    type="checkbox"
-                    disabled={isProcessingRemoveAck || isProcessingAddAck}
-                    defaultChecked={true}
-                    onChange={(e) =>
-                      handleToggleAck(id, level, e.target.checked)
-                    }
-                  />
-                  {`${id} (${level})`}
-                </label>
-              </li>
+              <HStack key={id}>
+                <Switch
+                  defaultChecked
+                  isDisabled={isProcessingRemoveAck || isProcessingAddAck}
+                  onChange={(e) => handleToggleAck(id, level, e.target.checked)}
+                  {...{ id }}
+                />
+                <FormLabel fontSize="12px" htmlFor={id}>
+                  {id}
+                </FormLabel>
+                <Badge
+                  colorScheme="yellow"
+                  fontSize="10px"
+                  size="small"
+                  textTransform="lowercase"
+                >
+                  {level}
+                </Badge>
+              </HStack>
             ))}
-          </ul>
-        </section>
+          </Stack>
+        </Stack>
 
-        <section>
-          <h3>Create Accounts</h3>
-          <ul style={{ textAlign: 'left', listStyleType: 'none' }}>
-            <li>
-              <button onClick={handleCreateAccountStandard}>
-                Create Standard Account
-              </button>
-            </li>
-            <li>
-              <button onClick={handleCreateAccountPayment}>
-                Account With Payments
-              </button>
-            </li>
-            <li>
-              <button onClick={handleCreateAccountQuickBooks}>
-                Account With Quickbooks Integration
-              </button>
-            </li>
-            <li>
-              <button onClick={handleCreateAccountXero}>
-                Account With Xero Integration
-              </button>
-            </li>
-            <li>
-              <button onClick={handleCreateAccountDraftProposal}>
-                Account With Draft Proposal
-              </button>
-            </li>
-          </ul>
-        </section>
-      </header>
-    </div>
+        <Stack as="section">
+          <Heading as="h2" size="sm" isTruncated>
+            Create Accounts
+          </Heading>
+          <Stack px="50px">
+            <Button
+              colorScheme="purple"
+              onClick={handleCreateAccountStandard}
+              isLoading={isProcessing}
+              size="xs"
+            >
+              Create Standard Account
+            </Button>
+            <Button
+              colorScheme="purple"
+              onClick={handleCreateAccountPayment}
+              isLoading={isProcessing}
+              size="xs"
+            >
+              Account With Payments
+            </Button>
+            <Button
+              colorScheme="purple"
+              onClick={handleCreateAccountQuickBooks}
+              isLoading={isProcessing}
+              size="xs"
+            >
+              Account With Qbo Integration
+            </Button>
+            <Button
+              colorScheme="purple"
+              onClick={handleCreateAccountXero}
+              isLoading={isProcessing}
+              size="xs"
+            >
+              Account With Xero Integration
+            </Button>
+            <Button
+              colorScheme="purple"
+              onClick={handleCreateAccountDraftProposal}
+              isLoading={isProcessing}
+              size="xs"
+            >
+              Account With Draft Proposal
+            </Button>
+          </Stack>
+        </Stack>
+
+        <Stack as="section" px="50px">
+          <Heading as="h2" size="sm" isTruncated>
+            Refined Ignition
+          </Heading>
+          <HStack justifyContent="center">
+            <Switch defaultChecked={false} id="enable-comic-sans" />
+            <FormLabel fontSize="12px" htmlFor="enable-comic-sans">
+              Using Comic Sans
+            </FormLabel>
+          </HStack>
+        </Stack>
+      </Stack>
+    </ChakraProvider>
   );
 };
 

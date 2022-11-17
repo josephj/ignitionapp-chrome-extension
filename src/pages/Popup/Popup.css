@@ -6,8 +6,9 @@
   right: 0px;
   text-align: center;
   height: 100%;
-  padding: 50px 10px;
+  padding: 20px;
   background-color: #282c34;
+  color: #fff;
 }
 
 .App-logo {
@@ -16,12 +17,10 @@
 }
 
 .App-header {
-
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
   color: white;
 }
 
